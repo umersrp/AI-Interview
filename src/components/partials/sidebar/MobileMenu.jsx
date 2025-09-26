@@ -11,8 +11,8 @@ import useMobileMenu from "@/hooks/useMobileMenu";
 import Icon from "@/components/ui/Icon";
 
 // import images
-import MobileLogo from "@/assets/images/logo/logo-c.svg";
-import MobileLogoWhite from "@/assets/images/logo/logo-c-white.svg";
+import MobileLogo from "@/assets/images/logo/logo.png";
+import MobileLogoWhite from "@/assets/images/logo/logo.png";
 import svgRabitImage from "@/assets/images/svg/rabit.svg";
 
 const MobileMenu = ({ className = "custom-class" }) => {
@@ -43,16 +43,16 @@ const MobileMenu = ({ className = "custom-class" }) => {
           <div className="flex items-center space-x-4">
             <div className="logo-icon">
               {!isDark && !isSemiDark ? (
-                <img src={MobileLogo} alt="" />
+                <img src={MobileLogo} alt="" className="w-40 h-20" />
               ) : (
-                <img src={MobileLogoWhite} alt="" />
+                <img src={MobileLogoWhite} alt="" className="w-40 h-20"/>
               )}
             </div>
-            <div>
+            {/* <div>
               <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                 DashCode
               </h1>
-            </div>
+            </div> */}
           </div>
         </Link>
         <button

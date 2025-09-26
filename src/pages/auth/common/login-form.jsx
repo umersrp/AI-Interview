@@ -1,85 +1,111 @@
 import React, { useState } from "react";
-import Textinput from "@/components/ui/Textinput";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import { useNavigate } from "react-router-dom";
 import Checkbox from "@/components/ui/Checkbox";
 import Button from "@/components/ui/Button";
-import { Link } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { useLoginMutation } from "@/store/api/auth/authApiSlice";
-import { setUser } from "@/store/api/auth/authSlice";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-const schema = yup
-  .object({
-    email: yup.string().email("Invalid email").required("Email is Required"),
-    password: yup.string().required("Password is Required"),
-  })
-  .required();
+import axios from "axios";
+
 const LoginForm = () => {
-  const [login, { isLoading, isError, error, isSuccess }] = useLoginMutation();
-
-  const dispatch = useDispatch();
-
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-  } = useForm({
-    resolver: yupResolver(schema),
-    //
-    mode: "all",
-  });
   const navigate = useNavigate();
-  const onSubmit = async (data) => {
+  const [checked, setChecked] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const UserRole = Object.freeze({
+    ADMIN: "admin",
+    STUDENT: "student",
+    TUTOR: "tutor",
+  });
+
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      const response = await login(data);
+      const response = await fetch(process.env.REACT_APP_BASE_URL + "/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-      if (response.error) {
-        throw new Error(response.error.message);
+      const result = await response.json();
+      console.log("Login response:", result);
+
+      // Destructure properly
+      const { data, message } = result;
+
+      // Check API response
+      if (!response.ok) throw new Error(message || "Login failed");
+      if (!data.token) throw new Error("Invalid credentials");
+
+      // Save token and user to localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      toast.success("Login Successful!");
+      console.log("Stored user:", localStorage.getItem("user"));
+      console.log("Token stored:", localStorage.getItem("token"));
+      console.log("User stored:", localStorage.getItem("user"));
+      // // Navigate after saving user
+      // setTimeout(() => navigate("/dashboard"), 500);
+
+      const userRole = data.user.type;
+
+      switch (userRole) {
+        case UserRole.ADMIN:
+          navigate("/dashboard");
+          break;
+        case UserRole.STUDENT:
+          navigate("/studentdashboard");
+          break;
+        case UserRole.TUTOR:
+          navigate("/dashboard");
+          break;
+        default:
+          throw new Error("Invalid role");
       }
 
-      if (response.data.error) {
-        throw new Error(response.data.error);
-      }
-
-      if (!response.data.token) {
-        throw new Error("Invalid credentials");
-      }
-
-      dispatch(setUser(data));
-      navigate("/dashboard");
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      toast.success("Login Successful");
-    } catch (error) {
-      toast.error(error.message);
+    } catch (err) {
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const [checked, setChecked] = useState(false);
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 ">
-      <Textinput
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <label htmlFor="">Email</label>
+      <input
         name="email"
-        label="email"
-        defaultValue="dashcode@gmail.com"
         type="email"
-        register={register}
-        error={errors.email}
-        className="h-[48px]"
+        value={formData.email}
+        onChange={handleChange}
+        placeholder="Enter your email"
+        className="form-control h-[48px] w-full px-3 border rounded mb-4"
       />
-      <Textinput
+
+      <label htmlFor="">password</label>
+      <input
         name="password"
-        label="passwrod"
         type="password"
-        defaultValue="dashcode"
-        register={register}
-        error={errors.password}
-        className="h-[48px]"
+        value={formData.password}
+        onChange={handleChange}
+        placeholder="Enter your password"
+        className="form-control h-[48px] w-full px-3 border rounded"
       />
-      <div className="flex justify-between">
+
+      <div className="flex justify-between items-center">
         <Checkbox
           value={checked}
           onChange={() => setChecked(!checked)}
@@ -87,17 +113,17 @@ const LoginForm = () => {
         />
         <Link
           to="/forgot-password"
-          className="text-sm text-slate-800 dark:text-slate-400 leading-6 font-medium"
+          className="text-sm text-slate-800 dark:text-slate-400 font-medium"
         >
-          Forgot Password?{" "}
+          Forgot Password?
         </Link>
       </div>
 
       <Button
         type="submit"
-        text="Sign in"
-        className="btn btn-dark block w-full text-center "
-        isLoading={isLoading}
+        text={loading ? "Signing in..." : "Sign in"}
+        className="btn btn-dark block w-full text-center"
+        isLoading={loading}
       />
     </form>
   );

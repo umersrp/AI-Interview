@@ -7,8 +7,8 @@ import useSemiDark from "@/hooks/useSemiDark";
 import useSkin from "@/hooks/useSkin";
 
 // import images
-import MobileLogo from "@/assets/images/logo/logo-c.svg";
-import MobileLogoWhite from "@/assets/images/logo/logo-c-white.svg";
+import MobileLogo from "@/assets/images/logo/logo.png";
+import MobileLogoWhite from "@/assets/images/logo/logo.png";
 
 const SidebarLogo = ({ menuHover }) => {
   const [isDark] = useDarkMode();
@@ -21,35 +21,24 @@ const SidebarLogo = ({ menuHover }) => {
     <div
       className={` logo-segment flex justify-between items-center bg-white dark:bg-slate-800 z-[9] py-6  px-4 
       ${menuHover ? "logo-hovered" : ""}
-      ${
-        skin === "bordered"
+      ${skin === "bordered"
           ? " border-b border-r-0 border-slate-200 dark:border-slate-700"
           : " border-none"
-      }
+        }
       
       `}
     >
       <Link to="/dashboard">
-        <div className="flex items-center space-x-4">
-          <div className="logo-icon">
-            {!isDark && !isSemiDark ? (
-              <img src={MobileLogo} alt="" />
-            ) : (
-              <img src={MobileLogoWhite} alt="" />
-            )}
-          </div>
-
-          {(!collapsed || menuHover) && (
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                DashCode
-              </h1>
-            </div>
+        <div className="flex justify-center items-center w-full">
+          {!isDark && !isSemiDark ? (
+            <img src={MobileLogo} alt="logo" className="w-40 h-20 object-contain" />
+          ) : (
+            <img src={MobileLogoWhite} alt="logo" className="w-40 h-20 object-contain" />
           )}
         </div>
       </Link>
 
-      {(!collapsed || menuHover) && (
+      {/* {(!collapsed || menuHover) && (
         <div
           onClick={() => setMenuCollapsed(!collapsed)}
           className={`h-4 w-4 border-[1.5px] border-slate-900 dark:border-slate-700 rounded-full transition-all duration-150
@@ -60,7 +49,7 @@ const SidebarLogo = ({ menuHover }) => {
           }
           `}
         ></div>
-      )}
+      )} */}
     </div>
   );
 };

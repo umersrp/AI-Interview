@@ -8,7 +8,11 @@ const Ecommerce = lazy(() => import("./pages/dashboard/ecommerce"));
 const CrmPage = lazy(() => import("./pages/dashboard/crm"));
 const ProjectPage = lazy(() => import("./pages/dashboard/project"));
 const BankingPage = lazy(() => import("./pages/dashboard/banking"));
-
+const StudentFormPage = lazy(() => import("./pages/dashboard/student/[id]/student-form"));
+const AddDocumentPage = lazy(() => import("./pages/dashboard/document/[id]/add-document"));
+const StudentListing = lazy(() => import("./pages/dashboard/student/student-listing"));
+const DocumentListing = lazy(() => import("./pages/dashboard/document/document-listing"));
+//login
 const Login = lazy(() => import("./pages/auth/login"));
 const Login2 = lazy(() => import("./pages/auth/login2"));
 const Login3 = lazy(() => import("./pages/auth/login3"));
@@ -127,6 +131,7 @@ import Sellers from "./pages/ecommerce/sellers";
 import AddProduct from "./pages/ecommerce/add-product";
 import InvoiceEPage from "./pages/ecommerce/invoice-ecompage";
 
+
 function App() {
   return (
     <main className="App  relative">
@@ -147,6 +152,11 @@ function App() {
         </Route>
         <Route path="/*" element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="student-form/:id" element={<StudentFormPage />} />
+          <Route path="document-listing" element={<DocumentListing />} />
+          <Route path="student-listing" element={<StudentListing />} />
+          <Route path="add-document/:id" element={<AddDocumentPage />} />
+          <Route path="add-document/add" element={<AddDocumentPage />} />
           <Route path="ecommerce" element={<Ecommerce />} />
           <Route path="crm" element={<CrmPage />} />
           <Route path="project" element={<ProjectPage />} />
@@ -226,6 +236,7 @@ function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="sellers" element={<Sellers />} />
           <Route path="invoice-ecommerce" element={<InvoiceEPage />} />
+
 
           <Route path="*" element={<Navigate to="/404" />} />
         </Route>

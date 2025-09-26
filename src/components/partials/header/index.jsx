@@ -69,7 +69,6 @@ const Header = ({ className = "custom-class" }) => {
       >
         <div className="flex justify-between items-center h-full">
           {/* For Vertical  */}
-
           {menuType === "vertical" && (
             <div className="flex items-center md:space-x-4 space-x-2 rtl:space-x-reverse">
               {collapsed && width >= breakpoints.xl && (
@@ -118,12 +117,12 @@ const Header = ({ className = "custom-class" }) => {
           ) : null}
           {/* Nav Tools  */}
           <div className="nav-tools flex items-center lg:space-x-6 space-x-3 rtl:space-x-reverse">
-            <Language />
+            {/* <Language />
             <SwitchDark />
             <MonoChrome />
             <HeaderCart />
             {width >= breakpoints.md && <Message />}
-            {width >= breakpoints.md && <Notification />}
+            {width >= breakpoints.md && <Notification />} */}
             {width >= breakpoints.md && <Profile />}
             {width <= breakpoints.md && (
               <div

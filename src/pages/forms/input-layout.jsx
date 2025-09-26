@@ -11,7 +11,7 @@ const InputlayoutPage = () => {
 
   return (
     <div className="grid xl:grid-cols-2 grid-cols-1 gap-5">
-      <Card title="Horizontal Form">
+      {/* <Card title="Horizontal Form">
         <div className="space-y-4">
           <Textinput
             label="Full name"
@@ -50,7 +50,7 @@ const InputlayoutPage = () => {
             <Button text="Submit" className="btn-dark" />
           </div>
         </div>
-      </Card>
+      </Card> */}
       <Card title="Horizontal Form With Icons">
         <div className="space-y-4">
           <InputGroup

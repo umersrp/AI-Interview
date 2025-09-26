@@ -3,7 +3,7 @@ import Dropdown from "@/components/ui/Dropdown";
 import Icon from "@/components/ui/Icon";
 import { Menu, Transition } from "@headlessui/react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { logOut } from "@/store/api/auth/authSlice";
 
 import UserAvatar from "@/assets/images/all-img/user.png";
@@ -22,7 +22,7 @@ const profileLabel = () => {
       </div>
       <div className="flex-none text-slate-600 dark:text-white text-sm font-normal items-center lg:flex hidden overflow-hidden text-ellipsis whitespace-nowrap">
         <span className="overflow-hidden text-ellipsis whitespace-nowrap w-[85px] block">
-          Albert Flores
+          Yasir Ali
         </span>
         <span className="text-base inline-block ltr:ml-[10px] rtl:mr-[10px]">
           <Icon icon="heroicons-outline:chevron-down"></Icon>
@@ -39,14 +39,15 @@ const Profile = () => {
   const handleLogout = () => {
     // Clear user data from local storage
     localStorage.removeItem("user");
-    dispatch(logOut());
+    localStorage.removeItem("token");  // You might want to clear the token too
+    dispatch(logOut());  // Dispatch logOut to update Redux state
+    navigate("/");  // Redirect to login page
   };
 
   const ProfileMenu = [
     {
       label: "Profile",
       icon: "heroicons-outline:user",
-
       action: () => {
         navigate("/profile");
       },
@@ -96,9 +97,8 @@ const Profile = () => {
     {
       label: "Logout",
       icon: "heroicons-outline:login",
-      action: () => {
-        dispatch(handleLogout);
-      },
+      // Correctly call handleLogout when the logout menu item is clicked
+      action: () => handleLogout(),
     },
   ];
 
