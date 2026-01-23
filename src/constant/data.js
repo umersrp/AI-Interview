@@ -1,45 +1,91 @@
 export const menuItems = [
-  {
-    isHeadr: true,
-    title: "menu",
-  },
-
-  {
+  
+    {
     title: "Dashboard",
     icon: "heroicons-outline:home",
     isOpen: true,
     isHide: true,
-    child: [
-      {
-        childtitle: "Student",
-        childlink: "student-listing",
-      },
-      {
-        childtitle: "Document",
-        childlink: "document-listing",
-      },
-      // {
-      //   childtitle: "Analytics Dashboard",
-      //   childlink: "dashboard",
-      // },
-      // {
-      //   childtitle: "Ecommerce Dashboard",
-      //   childlink: "ecommerce",
-      // },
-      // {
-      //   childtitle: "Project  Dashbaord",
-      //   childlink: "project",
-      // },
-      // {
-      //   childtitle: " CRM Dashbaord",
-      //   childlink: "crm",
-      // },
-      // {
-      //   childtitle: "Banking Dashboard",
-      //   childlink: "banking",
-      // },
-    ],
+    link: "dashboard",
   },
+  {
+    title: "Jobs",
+    icon: "heroicons-outline:briefcase",
+    isOpen: true,
+    isHide: true,
+    link: "jobs",
+  },
+  {
+    title: "Candidates",
+    icon: "heroicons-outline:users",
+    isOpen: true,
+    isHide: true,
+    link: "candidates",
+  },
+  {
+    title: "Interviews",
+    icon: "heroicons-outline:calendar",
+    isOpen: true,
+    isHide: true,
+    link: "interviews",
+  },
+  {
+    title: "Reports & Analytics",
+    icon: "heroicons-outline:chart-bar",
+    isOpen: true,
+    isHide: true,
+    link: "reportAnalytics",
+  },
+  {
+    title: "Settings",
+    icon: "heroicons-outline:cog",
+    isOpen: true,
+    isHide: true,
+    link: "settings",
+  },
+  // {
+  //   title: "Dashboard",
+  //   icon: "heroicons-outline:home",
+  //   isOpen: true,
+  //   isHide: true,
+  //   link: "dashboard",
+  //   // child: [
+  //   //   {
+  //   //     childtitle: "Student",
+  //   //     childlink: "student-listing",
+  //   //   },
+  //   //   {
+  //   //     childtitle: "Document",
+  //   //     childlink: "document-listing",
+  //   //   },
+  //     // {
+  //     //   childtitle: "Analytics Dashboard",
+  //     //   childlink: "dashboard",
+  //     // },
+  //     // {
+  //     //   childtitle: "Ecommerce Dashboard",
+  //     //   childlink: "ecommerce",
+  //     // },
+  //     // {
+  //     //   childtitle: "Project  Dashbaord",
+  //     //   childlink: "project",
+  //     // },
+  //     // {
+  //     //   childtitle: " CRM Dashbaord",
+  //     //   childlink: "crm",
+  //     // },
+  //     // {
+  //     //   childtitle: "Banking Dashboard",
+  //     //   childlink: "banking",
+  //     // },
+  //   //],
+  // },
+  // {
+  //   title: "Jobs",
+  //   icon: "heroicons-outline:home",
+  //   isOpen: true,
+  //   isHide: true,
+  //   link: "jobs",
+  // },
   // {
   //   title: "changelog",
   //   icon: "heroicons:arrow-trending-up",

@@ -130,6 +130,12 @@ import Customers from "./pages/ecommerce/customers";
 import Sellers from "./pages/ecommerce/sellers";
 import AddProduct from "./pages/ecommerce/add-product";
 import InvoiceEPage from "./pages/ecommerce/invoice-ecompage";
+import Jobs from "./AiInterviewPages/Jobs/jobs";
+import Candidates from "./AiInterviewPages/candidates/candidates";
+import Interviews from "./AiInterviewPages/interviews/interviews";
+import ReportAnalytics from "./AiInterviewPages/reportAndAnalytics/reportAndAnalytics";
+import JobForm from "./AiInterviewPages/Jobs/jobForm";
+import InterviewFlow from "./AiInterviewPages/interviews/interviewFlow";
 
 
 function App() {
@@ -237,8 +243,15 @@ function App() {
           <Route path="sellers" element={<Sellers />} />
           <Route path="invoice-ecommerce" element={<InvoiceEPage />} />
 
+          <Route path="jobs" element={<Jobs/>} />
+          <Route path="candidates" element={<Candidates/>} />
+          <Route path="interviews" element={<Interviews/>} />
+          <Route path="reportAnalytics" element={<ReportAnalytics/>} />
+          <Route path="add-job" element={<JobForm/>} />
+         <Route path="interview-flow" element={<InterviewFlow/>} />
 
           <Route path="*" element={<Navigate to="/404" />} />
+          
         </Route>
         <Route
           path="/404"

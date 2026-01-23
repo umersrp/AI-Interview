@@ -5,8 +5,8 @@ import useWidth from "@/hooks/useWidth";
 
 import MainLogo from "@/assets/images/logo/logo.svg";
 import LogoWhite from "@/assets/images/logo/logo-white.svg";
-import MobileLogo from "@/assets/images/logo/logo.png";
-import MobileLogoWhite from "@/assets/images/logo/logo.png";
+import MobileLogo from "@/assets/images/logo/new-logo.png";
+import MobileLogoWhite from "@/assets/images/logo/new-logo.png";
 const Logo = () => {
   const [isDark] = useDarkMode();
   const { width, breakpoints } = useWidth();
