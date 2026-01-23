@@ -375,10 +375,10 @@ const Interviews = () => {
                             </Button>
                           </Tippy>
                         ) : (
-                          <Tippy content="View Progress">
+                          <Tippy content="interview" >
                             <Button
                               className="text-purple-600 hover:text-purple-900 p-1"
-                              onClick={() => handleAction("viewProgress", interview)}
+                                onClick={() => navigate(`/interview-flow`)}
                             >
                               <Icon icon="heroicons-outline:arrow-right-circle" className="w-4 h-4" />
                             </Button>

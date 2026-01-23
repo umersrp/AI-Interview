@@ -1,12 +1,12 @@
 import React from "react";
-import Card from "@/components/ui/Card";
-import Icon from "@/components/ui/Icon";
-import { Link } from "react-router-dom";
+// import Card from "@/components/ui/Card";
+// import Icon from "@/components/ui/Icon";
+// import { Link } from "react-router-dom";
 
 const settings = () => {
   return (
     <div>
-      <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
+      {/* <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
         <Card>
           <div className="space-y-6">
             <div className="flex space-x-3 items-center rtl:space-x-reverse">
@@ -70,7 +70,7 @@ const settings = () => {
             </Link>
           </div>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 };
