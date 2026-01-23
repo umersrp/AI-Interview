@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Candidate1 from '@/assets/images/all-img/candidate1.png';
-import CPU from '@/assets/images/icons/cpu.svg';
 import { Icon } from '@iconify/react';
 
 export default function AIInterviewUI() {
