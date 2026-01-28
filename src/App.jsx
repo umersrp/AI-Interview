@@ -136,6 +136,7 @@ import Interviews from "./AiInterviewPages/interviews/interviews";
 import ReportAnalytics from "./AiInterviewPages/reportAndAnalytics/reportAndAnalytics";
 import JobForm from "./AiInterviewPages/Jobs/jobForm";
 import InterviewFlow from "./AiInterviewPages/interviews/interviewFlow";
+import CandidateForm from "./AiInterviewPages/candidates/candidateForm";
 
 
 function App() {
@@ -245,6 +246,7 @@ function App() {
 
           <Route path="jobs" element={<Jobs/>} />
           <Route path="candidates" element={<Candidates/>} />
+          <Route path="add-candidates" element={<CandidateForm/>} />
           <Route path="interviews" element={<Interviews/>} />
           <Route path="reportAnalytics" element={<ReportAnalytics/>} />
           <Route path="add-job" element={<JobForm/>} />

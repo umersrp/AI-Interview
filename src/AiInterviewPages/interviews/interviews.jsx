@@ -420,10 +420,7 @@ const Interviews = () => {
             </div>
           </div>
         )}
-      </Card>
-
-    
-      
+      </Card>         
     </div>
   );
 };

@@ -20,8 +20,11 @@ const Candidates = () => {
   });
 
   // Job roles from existing data
-  const jobRoles = [...new Set(candidatesData.map(candidate => candidate.appliedJob))];
-
+  const jobRoles = useMemo(() => {
+    const dynamicRoles = candidatesData.map(candidate => candidate.appliedJob);
+    const allRoles = [...new Set([...dynamicRoles])].sort();
+    return allRoles;
+  }, [candidatesData]);
   // Interview status options
   const statusOptions = ["All", "Completed", "Scheduled", "In Progress", "Pending", "Rejected"];
 
@@ -32,8 +35,8 @@ const Candidates = () => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         if (!candidate.candidateName.toLowerCase().includes(query) &&
-            !candidate.appliedJob.toLowerCase().includes(query) &&
-            !candidate.skills.some(skill => skill.toLowerCase().includes(query))) {
+          !candidate.appliedJob.toLowerCase().includes(query) &&
+          !candidate.skills.some(skill => skill.toLowerCase().includes(query))) {
           return false;
         }
       }
@@ -52,8 +55,8 @@ const Candidates = () => {
       }
 
       // Filter by interview status
-      if (filters.interviewStatus && filters.interviewStatus !== "All" && 
-          candidate.interviewStatus !== filters.interviewStatus) {
+      if (filters.interviewStatus && filters.interviewStatus !== "All" &&
+        candidate.interviewStatus !== filters.interviewStatus) {
         return false;
       }
 
@@ -74,8 +77,8 @@ const Candidates = () => {
 
   // Handle row selection
   const toggleRowSelection = (id) => {
-    setSelectedRows(prev => 
-      prev.includes(id) 
+    setSelectedRows(prev =>
+      prev.includes(id)
         ? prev.filter(rowId => rowId !== id)
         : [...prev, id]
     );
@@ -126,7 +129,7 @@ const Candidates = () => {
         <div className="mt-4 md:mt-0">
           <Button
             className="btn-md bg-indigo-600 hover:bg-indigo-700 text-white"
-            onClick={() => navigate("/candidate-form")}
+            onClick={() => navigate("/add-candidates")}
           >
             <Icon icon="heroicons-outline:user-add" className="w-4 h-4 mr-2" />
             Add Candidate
@@ -138,21 +141,20 @@ const Candidates = () => {
       <Card className="mb-6 rounded-xl">
         <h4 className="text-lg font-semibold text-slate-900 mb-4">Filter Candidates</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Job Role Filter */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Job Role
             </label>
-            <Select
+            <select
               value={filters.jobRole}
-              onChange={(e) => setFilters({...filters, jobRole: e.target.value})}
-              className="w-full"
+              onChange={(e) => setFilters({ ...filters, jobRole: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select a job role</option>
               {jobRoles.map((role, index) => (
                 <option key={index} value={role}>{role}</option>
               ))}
-            </Select>
+            </select>
           </div>
 
           {/* AI Score Range Filter */}
@@ -167,7 +169,7 @@ const Candidates = () => {
                 max="100"
                 placeholder="Min"
                 value={filters.aiScoreMin}
-                onChange={(e) => setFilters({...filters, aiScoreMin: e.target.value})}
+                onChange={(e) => setFilters({ ...filters, aiScoreMin: e.target.value })}
                 className="w-full"
               />
               <Input
@@ -176,7 +178,7 @@ const Candidates = () => {
                 max="100"
                 placeholder="Max"
                 value={filters.aiScoreMax}
-                onChange={(e) => setFilters({...filters, aiScoreMax: e.target.value})}
+                onChange={(e) => setFilters({ ...filters, aiScoreMax: e.target.value })}
                 className="w-full"
               />
             </div>
@@ -189,7 +191,7 @@ const Candidates = () => {
             </label>
             <Select
               value={filters.interviewStatus}
-              onChange={(e) => setFilters({...filters, interviewStatus: e.target.value})}
+              onChange={(e) => setFilters({ ...filters, interviewStatus: e.target.value })}
               className="w-full"
             >
               <option value="">Select status</option>
@@ -214,7 +216,7 @@ const Candidates = () => {
               />
               <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={() => {}}
+                onClick={() => { }}
               >
                 Apply Filters
               </Button>
@@ -232,11 +234,11 @@ const Candidates = () => {
           </Button>
         </div>
       </Card>
-     <h1 className="font-semibold text-[24px] leading-[32px] mb-6">
+      <h1 className="font-semibold text-[24px] leading-[32px] mb-6">
         Candidate List
       </h1>
       {/* Candidate List Table */}
-      <Card  className="rounded-xl">
+      <Card className="rounded-xl">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
@@ -289,19 +291,19 @@ const Candidates = () => {
                     <div className="flex items-center">
                       <div className="w-16 bg-slate-200 rounded-full h-2 mr-3">
                         <div
-                          className={`h-2 rounded-full ${candidate.cvMatchPercent >= 80 
-                            ? 'bg-emerald-500' 
-                            : candidate.cvMatchPercent >= 60 
-                            ? 'bg-amber-500' 
-                            : 'bg-red-500'}`}
+                          className={`h-2 rounded-full ${candidate.cvMatchPercent >= 80
+                            ? 'bg-emerald-500'
+                            : candidate.cvMatchPercent >= 60
+                              ? 'bg-amber-500'
+                              : 'bg-red-500'}`}
                           style={{ width: `${candidate.cvMatchPercent}%` }}
                         ></div>
                       </div>
-                      <span className={`font-medium ${candidate.cvMatchPercent >= 80 
-                        ? 'text-emerald-700' 
-                        : candidate.cvMatchPercent >= 60 
-                        ? 'text-amber-700' 
-                        : 'text-red-700'}`}>
+                      <span className={`font-medium ${candidate.cvMatchPercent >= 80
+                        ? 'text-emerald-700'
+                        : candidate.cvMatchPercent >= 60
+                          ? 'text-amber-700'
+                          : 'text-red-700'}`}>
                         {candidate.cvMatchPercent}%
                       </span>
                     </div>
