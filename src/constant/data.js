@@ -13,6 +13,13 @@ export const menuItems = [
     isOpen: true,
     isHide: true,
     link: "jobs",
+  },//tenant-listing
+    {
+    title: "Tenant",
+    icon: "heroicons-outline:users",
+    isOpen: true,
+    isHide: true,
+    link: "tenant-listing",
   },
   {
     title: "Candidates",

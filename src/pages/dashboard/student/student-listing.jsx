@@ -224,13 +224,13 @@ const StudentListing = () => {
               className="min-w-full divide-y divide-slate-100 table-fixed dark:divide-slate-700"
               {...getTableProps()}
             >
-              <thead className="border-t border-slate-100 dark:border-slate-800">
+              <thead className="border-t border-slate-100 dark:border-slate-800 bg-gradient-to-r from-[#4669FA] to-[#ae5ff4]">
                 {headerGroups.map((headerGroup) => (
                   <tr {...headerGroup.getHeaderGroupProps()}>
                     {headerGroup.headers.map((column) => (
                       <th
                         {...column.getHeaderProps(column.getSortByToggleProps())}
-                        className="table-th"
+                        className="table-th whitespace-nowrap"
                       >
                         {column.render("Header")}
                         <span>

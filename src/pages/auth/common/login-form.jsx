@@ -1,230 +1,178 @@
-// import React, { useState } from "react";
-// import Checkbox from "@/components/ui/Checkbox";
-// import Button from "@/components/ui/Button";
-// import { Link, useNavigate } from "react-router-dom";
-// import { toast } from "react-toastify";
-// import axios from "axios";
-
-// const LoginForm = () => {
-//   const navigate = useNavigate();
-//   const [checked, setChecked] = useState(false);
-//   const [loading, setLoading] = useState(false);
-
-//   const UserRole = Object.freeze({
-//     ADMIN: "admin",
-//     STUDENT: "student",
-//     TUTOR: "tutor",
-//   });
-
-
-//   const [formData, setFormData] = useState({
-//     email: "",
-//     password: "",
-//   });
-
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-//     setFormData({ ...formData, [name]: value });
-//   };
-
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setLoading(true);
-
-//     try {
-//       const response = await fetch(process.env.REACT_APP_BASE_URL + "/auth/login", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify(formData),
-//       });
-
-//       const result = await response.json();
-//       console.log("Login response:", result);
-
-//       // Destructure properly
-//       const { data, message } = result;
-
-//       // Check API response
-//       if (!response.ok) throw new Error(message || "Login failed");
-//       if (!data.token) throw new Error("Invalid credentials");
-
-//       // Save token and user to localStorage
-//       localStorage.setItem("token", data.token);
-//       localStorage.setItem("user", JSON.stringify(data.user));
-
-//       toast.success("Login Successful!");
-//       console.log("Stored user:", localStorage.getItem("user"));
-//       console.log("Token stored:", localStorage.getItem("token"));
-//       console.log("User stored:", localStorage.getItem("user"));
-//       // // Navigate after saving user
-//       // setTimeout(() => navigate("/dashboard"), 500);
-
-//       const userRole = data.user.type;
-
-//       switch (userRole) {
-//         case UserRole.ADMIN:
-//           navigate("/dashboard");
-//           break;
-//         case UserRole.STUDENT:
-//           navigate("/studentdashboard");
-//           break;
-//         case UserRole.TUTOR:
-//           navigate("/dashboard");
-//           break;
-//         default:
-//           throw new Error("Invalid role");
-//       }
-
-//     } catch (err) {
-//       toast.error(err.message || "Something went wrong");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <form onSubmit={handleSubmit} className="space-y-4">
-//       <label htmlFor="">Email</label>
-//       <input
-//         name="email"
-//         type="email"
-//         value={formData.email}
-//         onChange={handleChange}
-//         placeholder="Enter your email"
-//         className="form-control h-[48px] w-full px-3 border rounded mb-4"
-//       />
-
-//       <label htmlFor="">password</label>
-//       <input
-//         name="password"
-//         type="password"
-//         value={formData.password}
-//         onChange={handleChange}
-//         placeholder="Enter your password"
-//         className="form-control h-[48px] w-full px-3 border rounded"
-//       />
-
-//       <div className="flex justify-between items-center">
-//         <Checkbox
-//           value={checked}
-//           onChange={() => setChecked(!checked)}
-//           label="Keep me signed in"
-//         />
-//         <Link
-//           to="/forgot-password"
-//           className="text-sm text-slate-800 dark:text-slate-400 font-medium"
-//         >
-//           Forgot Password?
-//         </Link>
-//       </div>
-
-//       <Button
-//         type="submit"
-//         text={loading ? "Signing in..." : "Sign in"}
-//         className="btn btn-dark block w-full text-center"
-//         isLoading={loading}
-//       />
-//     </form>
-//   );
-// };
-
-// export default LoginForm;
-
-
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import Textinput from "@/components/ui/Textinput";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import Checkbox from "@/components/ui/Checkbox";
 import Button from "@/components/ui/Button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useLoginMutation } from "@/store/api/auth/authApiSlice";
+import { setUser } from "@/store/api/auth/authSlice";
 import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 
 const LoginForm = () => {
+  const [login, { isLoading }] = useLoginMutation();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth);
+  const formRef = useRef(null);
+
+  const {
+    register,
+    formState: { errors },
+    handleSubmit,
+    setValue,
+    getValues,
+  } = useForm({
+    mode: "onSubmit",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+  
   const navigate = useNavigate();
-  const [checked, setChecked] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const UserRole = Object.freeze({
-    ADMIN: "admin",
-    STUDENT: "student",
-    TUTOR: "tutor",
-  });
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    // Simulate API delay
-    setTimeout(() => {
-      try {
-        // Hardcoded validation
-        if (
-          formData.email === "admin@srptechs.com" &&
-          formData.password === "Test123"
-        ) {
-          const mockUser = {
-            id: 1,
-            name: "Admin User",
-            email: "admin@srptechs.com",
-            type: UserRole.ADMIN,
-            role: UserRole.ADMIN,
-            avatar: "/path/to/avatar.jpg",
-          };
-
-          localStorage.setItem("token", "hardcoded-jwt-token");
-          localStorage.setItem("user", JSON.stringify(mockUser));
-
-          toast.success("Login Successful!");
-          navigate("/dashboard");
-        } else {
-          throw new Error("Invalid email or password");
-        }
-      } catch (err) {
-        toast.error(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
+  useEffect(() => {
+    if (user?.isAuth) {
+      // Redirect based on user type
+      if (user?.user?.type === "admin") {
+        navigate("/dashboard");
+      } else if (user?.user?.type === "company") {
+        navigate("/dashboard");
+      } else {
+        navigate("/dashboard");
       }
-    }, 500);
+    }
+  }, [user?.isAuth, user?.user?.type, navigate]);
+
+  // Handle Enter key press globally on the form
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Enter" && !isLoading) {
+        e.preventDefault();
+        
+        // Get autofilled values from DOM
+        const emailInput = document.querySelector('input[name="email"]');
+        const passwordInput = document.querySelector('input[name="password"]');
+        
+        const actualEmail = emailInput?.value;
+        const actualPassword = passwordInput?.value;
+
+        // If both fields have values (autofilled or typed), submit
+        if (actualEmail && actualPassword) {
+          // Update form values
+          setValue("email", actualEmail);
+          setValue("password", actualPassword);
+          
+          // Trigger form submission
+          if (formRef.current) {
+            formRef.current.dispatchEvent(
+              new Event('submit', { cancelable: true, bubbles: true })
+            );
+          }
+        }
+      }
+    };
+
+    // Add listener to document to catch Enter from anywhere in the form
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isLoading, setValue]);
+
+  const onSubmit = async (data) => {
+    // Get actual input values from DOM (handles autofill)
+    const emailInput = document.querySelector('input[name="email"]');
+    const passwordInput = document.querySelector('input[name="password"]');
+    
+    const actualEmail = emailInput?.value || data.email;
+    const actualPassword = passwordInput?.value || data.password;
+
+    // Simple client-side validation
+    if (!actualEmail || !actualEmail.includes('@')) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    
+    if (!actualPassword) {
+      toast.error("Please enter your password");
+      return;
+    }
+
+    try {
+      // Make API call to login endpoint
+      const response = await login({
+        email: actualEmail,
+        password: actualPassword,
+      }).unwrap();
+
+      console.log("Full API Response:", response); // Debug log
+
+      const responseData = response?.data;
+      
+      if (!responseData?.token) {
+        throw new Error("Invalid credentials");
+      }
+
+      const userData = responseData.user;
+      
+      // Store user data in Redux
+      dispatch(setUser({
+        ...userData,
+        token: responseData.token,
+        isAuth: true
+      }));
+
+      // Store in localStorage
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("token", responseData.token);
+      localStorage.setItem("userRole", userData.type);
+      localStorage.setItem("userId", userData._id);
+      
+      toast.success("Login Successful");
+      
+      // Redirect based on user type
+      if (userData?.type === "admin") {
+        navigate("/tenant-listing");
+      } else if (userData?.type === "company") {
+        navigate("/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+      
+    } catch (error) {
+      console.error("Full error object:", error);
+      const errorMessage = error?.data?.message || error.message || "Login failed. Please try again.";
+      toast.error(errorMessage);
+    }
   };
+
+  const [checked, setChecked] = useState(false);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium mb-1">Email</label>
-        <input
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="Enter your email"
-          className="form-control h-[48px] w-full px-3 border rounded"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Password</label>
-        <input
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="Enter your password"
-          className="form-control h-[48px] w-full px-3 border rounded"
-          required
-        />
-      </div>
-
-      <div className="flex justify-between items-center">
+    <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Textinput
+        name="email"
+        label="Email"
+        type="email"
+        register={register}
+        error={errors.email}
+        className="h-[48px]"
+        placeholder="Enter your email"
+      />
+      <Textinput
+        name="password"
+        label="Password"
+        type="password"
+        register={register}
+        error={errors.password}
+        className="h-[48px]"
+        placeholder="Enter your password"
+      />
+      <div className="flex justify-between">
         <Checkbox
           value={checked}
           onChange={() => setChecked(!checked)}
@@ -232,7 +180,7 @@ const LoginForm = () => {
         />
         <Link
           to="/forgot-password"
-          className="text-sm text-slate-800 dark:text-slate-400 font-medium"
+          className="text-sm text-slate-800 dark:text-slate-400 leading-6 font-medium"
         >
           Forgot Password?
         </Link>
@@ -240,9 +188,9 @@ const LoginForm = () => {
 
       <Button
         type="submit"
-        text={loading ? "Signing in..." : "Sign in"}
+        text="Sign in"
         className="btn btn-dark block w-full text-center"
-        isLoading={loading}
+        isLoading={isLoading}
       />
     </form>
   );

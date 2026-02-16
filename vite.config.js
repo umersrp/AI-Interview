@@ -22,7 +22,7 @@ export default defineConfig({
         __DEV__: JSON.stringify(true),
         "process.env.NODE_ENV": JSON.stringify("development"),
         //"process.env.REACT_APP_BASE_URL": JSON.stringify("https://ksvvmxbk-3100.inc1.devtunnels.ms/api"),
-               // "process.env.REACT_APP_BASE_URL": JSON.stringify("http://13.51.230.148:3000/api"),
+         "process.env.REACT_APP_BASE_URL": JSON.stringify("https://rjj3twnh-3100.asse.devtunnels.ms/api"),
       },
     }),
     react(),

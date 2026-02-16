@@ -3,11 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const JobForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = !!id;
+  const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(isEditMode);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -19,9 +22,9 @@ const JobForm = () => {
     interviewType: "voice",
     status: "active",
     aiWeightage: {
-      skills: 40,
-      communication: 30,
-      experience: 30,
+      skills: 0,
+      communication: 0,
+      experience: 0,
     },
     responsibilities: "",
     qualifications: "",
@@ -43,6 +46,49 @@ const JobForm = () => {
   // Calculate total weightage
   const totalWeightage = Object.values(formData.aiWeightage).reduce((sum, val) => sum + val, 0);
 
+  // Fetch job data if in edit mode
+  useEffect(() => {
+    const fetchJobData = async () => {
+      if (isEditMode && id) {
+        try {
+          setFetchLoading(true);
+          const token = localStorage.getItem("token");
+          const response = await axios.get(
+            `${import.meta.env.VITE_APP_BASE_URL}/jobs/${id}`,
+            { headers: { Authorization: `${token}` } }
+          );
+          
+          const jobData = response.data.data;
+          
+          // Map API response to form state
+          setFormData({
+            jobTitle: jobData.jobTitle || "",
+            department: jobData.department || "",
+            jobDescription: jobData.jobDescription || "",
+            requiredSkills: jobData.requiredSkills || [],
+            experience: jobData.experience?.toString() || "",
+            interviewType: jobData.interviewType?.toLowerCase() || "voice",
+            status: jobData.status?.toLowerCase() || "active",
+            aiWeightage: jobData.aiWeightage || { skills: 0, communication: 0, experience: 0 },
+            responsibilities: jobData.responsibilities || "",
+            qualifications: jobData.qualifications || "",
+            location: jobData.location || "",
+            salaryRange: jobData.salaryRange || "",
+            employmentType: jobData.employmentType?.toLowerCase() || "full-time",
+          });
+        } catch (error) {
+          console.error("Error fetching job:", error);
+          toast.error(error.response?.data?.message || "Failed to load job data");
+          navigate("/job-listing");
+        } finally {
+          setFetchLoading(false);
+        }
+      }
+    };
+
+    fetchJobData();
+  }, [isEditMode, id, navigate]);
+
   // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -50,7 +96,10 @@ const JobForm = () => {
       ...prev,
       [name]: value
     }));
-    setErrors(prev => ({ ...prev, [name]: "" }));
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   // Handle AI weightage changes
@@ -84,6 +133,10 @@ const JobForm = () => {
         requiredSkills: [...prev.requiredSkills, skillToAdd]
       }));
       setSkillInput("");
+      // Clear requiredSkills error if skills are added
+      if (errors.requiredSkills) {
+        setErrors(prev => ({ ...prev, requiredSkills: "" }));
+      }
     }
   };
 
@@ -93,6 +146,10 @@ const JobForm = () => {
       ...prev,
       requiredSkills: prev.requiredSkills.filter(skill => skill !== skillToRemove)
     }));
+    // If no skills left, set error
+    if (formData.requiredSkills.length <= 1) {
+      setErrors(prev => ({ ...prev, requiredSkills: "At least one skill is required" }));
+    }
   };
 
   // Handle skill key press
@@ -102,33 +159,7 @@ const JobForm = () => {
       handleAddSkill();
     }
   };
-// Add this useEffect to load job data when in edit mode
-useEffect(() => {
-  if (isEditMode && id) {
-    const savedJobs = localStorage.getItem("jobsData");
-    if (savedJobs) {
-      const jobs = JSON.parse(savedJobs);
-      const jobToEdit = jobs.find(job => job.id === id);
-      if (jobToEdit) {
-        setFormData({
-          jobTitle: jobToEdit.jobTitle || "",
-          department: jobToEdit.department || "",
-          jobDescription: jobToEdit.jobDescription || "",
-          requiredSkills: jobToEdit.requiredSkills || [],
-          experience: jobToEdit.experience || "",
-          interviewType: jobToEdit.interviewType || "voice",
-          status: jobToEdit.status || "active",
-          aiWeightage: jobToEdit.aiWeightage || { skills: 40, communication: 30, experience: 30 },
-          responsibilities: jobToEdit.responsibilities || "",
-          qualifications: jobToEdit.qualifications || "",
-          location: jobToEdit.location || "",
-          salaryRange: jobToEdit.salaryRange || "",
-          employmentType: jobToEdit.employmentType || "full-time",
-        });
-      }
-    }
-  }
-}, [isEditMode, id]);
+
   // Form validation
   const validateForm = () => {
     const newErrors = {};
@@ -154,63 +185,108 @@ useEffect(() => {
       newErrors.aiWeightage = "AI weightage must total 100%";
     }
 
+    // Validate experience is a number (since API expects number)
+    if (formData.experience && isNaN(parseInt(formData.experience))) {
+      newErrors.experience = "Experience must be a number";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   // Handle form submission
-// Replace the handleSubmit function in JobForm with this:
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error("Please fill all required fields correctly");
+      return;
+    }
 
-const handleSubmit = (e) => {
-  e.preventDefault();
-  
-  if (!validateForm()) {
-    toast.error("Please fill all required fields correctly");
-    return;
-  }
+    setLoading(true);
 
-  // Prepare data for submission
-  const jobData = {
-    ...formData,
-    id: isEditMode ? id : Date.now().toString(),
-    aiWeightage: {
-      skills: parseInt(formData.aiWeightage.skills),
-      communication: parseInt(formData.aiWeightage.communication),
-      experience: parseInt(formData.aiWeightage.experience),
+    // Prepare data for API
+    const apiData = {
+      jobTitle: formData.jobTitle,
+      department: formData.department,
+      jobDescription: formData.jobDescription,
+      requiredSkills: formData.requiredSkills,
+      experience: parseInt(formData.experience), // Convert to number
+      interviewType: formData.interviewType,
+      responsibilities: formData.responsibilities || "Not specified",
+      qualifications: formData.qualifications || "Not specified",
+      location: formData.location || "Not specified",
+      salaryRange: formData.salaryRange || "Not specified",
+      employmentType: formData.employmentType,
+      aiWeightage: {
+        skills: parseInt(formData.aiWeightage.skills) || 0,
+        communication: parseInt(formData.aiWeightage.communication) || 0,
+        experience: parseInt(formData.aiWeightage.experience) || 0,
+      }
+    };
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      if (isEditMode) {
+        // Update existing job
+        await axios.put(
+          `${import.meta.env.VITE_APP_BASE_URL}/jobs/${id}`,
+          apiData,
+          { headers: { Authorization: `${token}`, "Content-Type": "application/json" } }
+        );
+        toast.success("Job updated successfully!");
+      } else {
+        // Create new job
+        await axios.post(
+          `${import.meta.env.VITE_APP_BASE_URL}/jobs/Create`,
+          apiData,
+          { headers: { Authorization: `${token}`, "Content-Type": "application/json" } }
+        );
+        toast.success("Job created successfully!");
+      }
+      
+      // Navigate back to jobs listing
+      setTimeout(() => navigate("/job-listing"), 1200);
+    } catch (error) {
+      console.error("Error saving job:", error);
+      toast.error(error.response?.data?.message || "Failed to save job");
+      
+      // Handle field-specific errors from API
+      if (error.response?.data?.errors) {
+        const apiErrors = {};
+        error.response.data.errors.forEach(err => {
+          apiErrors[err.field] = err.message;
+        });
+        setErrors(apiErrors);
+      }
+    } finally {
+      setLoading(false);
     }
   };
-
-  console.log("Job Data:", jobData);
-
-  // Dispatch event to update jobs in listing page
-  const event = new CustomEvent('jobFormSubmit', {
-    detail: {
-      type: 'JOB_FORM_SUBMIT',
-      data: jobData
-    }
-  });
-  window.dispatchEvent(event);
-
-  // Show success message
-  toast.success(isEditMode ? "Job updated successfully!" : "Job created successfully!");
-  
-  // Navigate back to jobs listing
-  navigate("/jobs");
-};
 
   // Handle cancel
   const handleCancel = () => {
-    if (window.confirm("Are you sure you want to cancel? Unsaved changes will be lost.")) {
-      navigate("/jobs");
-    }
+    navigate("/job-listing");
   };
+
+  if (fetchLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading job data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <button
-          onClick={() => navigate("/jobs")}
+          onClick={() => navigate("/job-listing")}
           className="flex items-center text-slate-600 hover:text-slate-900 mb-4"
         >
           <span className="mr-2">←</span> Back to Jobs
@@ -263,39 +339,37 @@ const handleSubmit = (e) => {
                   }`}
                 >
                   <option value="">Select Department</option>
-                  <option value="engineering">Engineering</option>
-                  <option value="product">Product</option>
-                  <option value="design">Design</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="sales">Sales</option>
-                  <option value="hr">HR</option>
-                  <option value="finance">Finance</option>
-                  <option value="operations">Operations</option>
+                  <option value="Engineering">Engineering</option>
+                  <option value="Product">Product</option>
+                  <option value="Design">Design</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Sales">Sales</option>
+                  <option value="HR">HR</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Operations">Operations</option>
                 </select>
                 {errors.department && (
                   <p className="text-red-500 text-sm mt-1">{errors.department}</p>
                 )}
               </div>
 
-              {/* Experience Level */}
+              {/* Experience Level - Now as number input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Experience Level *
+                  Experience (Years) *
                 </label>
-                <select
+                <input
+                  type="number"
                   name="experience"
                   value={formData.experience}
                   onChange={handleInputChange}
+                  min="0"
+                  max="30"
+                  placeholder="e.g., 3"
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.experience ? 'border-red-500' : 'border-gray-300'
                   }`}
-                >
-                  <option value="">Select Experience</option>
-                  <option value="entry">Entry Level (0-2 years)</option>
-                  <option value="mid">Mid Level (2-5 years)</option>
-                  <option value="senior">Senior Level (5-8 years)</option>
-                  <option value="lead">Lead (8+ years)</option>
-                </select>
+                />
                 {errors.experience && (
                   <p className="text-red-500 text-sm mt-1">{errors.experience}</p>
                 )}
@@ -304,7 +378,7 @@ const handleSubmit = (e) => {
               {/* Location */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
+                  Location *
                 </label>
                 <input
                   type="text"
@@ -312,14 +386,19 @@ const handleSubmit = (e) => {
                   value={formData.location}
                   onChange={handleInputChange}
                   placeholder="e.g., Remote, New York"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.location ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.location && (
+                  <p className="text-red-500 text-sm mt-1">{errors.location}</p>
+                )}
               </div>
 
               {/* Salary Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Salary Range
+                  Salary Range *
                 </label>
                 <input
                   type="text"
@@ -327,32 +406,42 @@ const handleSubmit = (e) => {
                   value={formData.salaryRange}
                   onChange={handleInputChange}
                   placeholder="e.g., 80,000 - 120,000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.salaryRange ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.salaryRange && (
+                  <p className="text-red-500 text-sm mt-1">{errors.salaryRange}</p>
+                )}
               </div>
 
               {/* Employment Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Employment Type
+                  Employment Type *
                 </label>
                 <select
                   name="employmentType"
                   value={formData.employmentType}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.employmentType ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
                   <option value="full-time">Full-time</option>
                   <option value="part-time">Part-time</option>
                   <option value="contract">Contract</option>
                   <option value="internship">Internship</option>
                 </select>
+                {errors.employmentType && (
+                  <p className="text-red-500 text-sm mt-1">{errors.employmentType}</p>
+                )}
               </div>
 
               {/* Interview Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Interview Type
+                  Interview Type *
                 </label>
                 <div className="flex space-x-4">
                   <label className="flex items-center">
@@ -377,7 +466,21 @@ const handleSubmit = (e) => {
                     />
                     <span>Text</span>
                   </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="interviewType"
+                      value="video"
+                      checked={formData.interviewType === "video"}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span>Video</span>
+                  </label>
                 </div>
+                {errors.interviewType && (
+                  <p className="text-red-500 text-sm mt-1">{errors.interviewType}</p>
+                )}
               </div>
 
               {/* Status */}
@@ -599,7 +702,7 @@ const handleSubmit = (e) => {
               {/* Responsibilities */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Key Responsibilities
+                  Key Responsibilities *
                 </label>
                 <textarea
                   name="responsibilities"
@@ -607,14 +710,19 @@ const handleSubmit = (e) => {
                   onChange={handleInputChange}
                   rows={4}
                   placeholder="List the main responsibilities of this role..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.responsibilities ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.responsibilities && (
+                  <p className="text-red-500 text-sm mt-1">{errors.responsibilities}</p>
+                )}
               </div>
 
               {/* Qualifications */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Required Qualifications
+                  Required Qualifications *
                 </label>
                 <textarea
                   name="qualifications"
@@ -622,8 +730,13 @@ const handleSubmit = (e) => {
                   onChange={handleInputChange}
                   rows={4}
                   placeholder="List required qualifications, education, certifications..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.qualifications ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.qualifications && (
+                  <p className="text-red-500 text-sm mt-1">{errors.qualifications}</p>
+                )}
               </div>
             </div>
           </div>
@@ -635,11 +748,13 @@ const handleSubmit = (e) => {
               className="btn-light"
               type="button"
               onClick={handleCancel}
+              disabled={loading}
             />
             <Button
-              text={isEditMode ? "Update Job" : "Create Job"}
+              text={loading ? "Saving..." : (isEditMode ? "Update Job" : "Create Job")}
               className="btn-primary"
               type="submit"
+              disabled={loading}
             />
           </div>
         </form>
@@ -649,3 +764,4 @@ const handleSubmit = (e) => {
 };
 
 export default JobForm;
+

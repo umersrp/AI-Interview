@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "@/components/ui/Card";
 import Icon from "@/components/ui/Icon";
@@ -11,125 +11,112 @@ import {
   useGlobalFilter,
   usePagination,
 } from "react-table";
+import axios from "axios";
+import { toast } from "react-toastify";
+import Loader from "@/assets/images/logo/logo3.png";
+import Modal from "@/components/ui/Modal";
+import 'tippy.js/themes/light.css';
 
 const Jobs = () => {
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+const [selectedJobId, setSelectedJobId] = useState(null);
 
-  // Initialize jobs data from localStorage or default data
-  useEffect(() => {
-    const savedJobs = localStorage.getItem("jobsData");
-    if (savedJobs) {
-      setJobs(JSON.parse(savedJobs));
-    } else {
-      // Default sample data
-      const defaultJobs = [
-        {
-          id: "1",
-          jobTitle: "Frontend Developer",
-          department: "Engineering",
-          requiredSkills: ["React", "JavaScript", "CSS", "HTML"],
-          experience: "Mid Level (2-5 years)",
-          interviewType: "Voice",
-          status: "Active",
-          aiWeightage: { skills: 40, communication: 30, experience: 30 },
-          location: "Remote",
-          salaryRange: "$80,000 - $100,000",
-          employmentType: "Full-time",
-        },
-        {
-          id: "2",
-          jobTitle: "UX Designer",
-          department: "Design",
-          requiredSkills: ["Figma", "UI/UX", "Prototyping", "User Research"],
-          experience: "Senior Level (5-8 years)",
-          interviewType: "Text",
-          status: "Active",
-          aiWeightage: { skills: 35, communication: 40, experience: 25 },
-          location: "New York",
-          salaryRange: "$90,000 - $120,000",
-          employmentType: "Full-time",
-        },
-        {
-          id: "3",
-          jobTitle: "Product Manager",
-          department: "Product",
-          requiredSkills: ["Agile", "Scrum", "Product Strategy", "Roadmapping"],
-          experience: "Senior Level (5-8 years)",
-          interviewType: "Voice",
-          status: "Active",
-          aiWeightage: { skills: 30, communication: 40, experience: 30 },
-          location: "San Francisco",
-          salaryRange: "$120,000 - $150,000",
-          employmentType: "Full-time",
-        },
-      ];
-      setJobs(defaultJobs);
-      localStorage.setItem("jobsData", JSON.stringify(defaultJobs));
-    }
-  }, []);
+  // Pagination states
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [pages, setPages] = useState(1);
 
-  // Save jobs to localStorage whenever jobs change
-  useEffect(() => {
-    if (jobs.length > 0) {
-      localStorage.setItem("jobsData", JSON.stringify(jobs));
-    }
-  }, [jobs]);
+  // Fetch jobs from API
+  const fetchJobs = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_APP_BASE_URL}/jobs/GetAll?page=${page}&limit=${limit}`,
+        { headers: { Authorization: `${token}` } }
+      );
 
-  // Handle form submission from job-form
-  useEffect(() => {
-    const handleFormSubmit = (event) => {
-      if (event.detail && event.detail.type === 'JOB_FORM_SUBMIT') {
-        const newJob = event.detail.data;
-        if (newJob.id) {
-          // Edit existing job
-          setJobs(prev => prev.map(job => 
-            job.id === newJob.id ? newJob : job
-          ));
-        } else {
-          // Add new job
-          const jobWithId = {
-            ...newJob,
-            id: Date.now().toString(),
-            status: "Active",
-            aiWeightage: newJob.aiWeightage || { skills: 40, communication: 30, experience: 30 }
-          };
-          setJobs(prev => [...prev, jobWithId]);
-        }
+      console.log("Jobs API Response:", response.data);
+
+      // Handle different response structures
+      const jobsData = response.data?.data?.jobs || response.data?.data || [];
+      setJobs(jobsData);
+
+      // Update pagination if available
+      if (response.data?.pagination) {
+        setTotal(response.data.pagination.total || 0);
+        setPages(response.data.pagination.pages || 1);
+      } else if (response.data?.data?.total) {
+        setTotal(response.data.data.total);
+        setPages(response.data.data.pages || 1);
       }
-    };
 
-    window.addEventListener('jobFormSubmit', handleFormSubmit);
-    return () => window.removeEventListener('jobFormSubmit', handleFormSubmit);
-  }, []);
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      setError("Failed to load jobs");
+      toast.error(error.response?.data?.message || "Failed to load jobs");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit]);
 
-  const handleAction = (action, row) => {
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  // Handle job actions
+  const handleAction = async (action, row) => {
+    const jobId = row.original._id || row.original.id;
+    
     if (action === "edit") {
-      navigate(`/job-form/${row.id}`, { state: { jobData: row.original } });
+      navigate(`/add-job/${jobId}`);
     }
     if (action === "view") {
-      navigate(`/job-details/${row.id}`, { state: { jobData: row.original } });
+      navigate(`/add-job/${jobId}`, { state: { jobData: row.original } });
     }
     if (action === "close") {
-      setJobs(prev => prev.map(job => 
-        job.id === row.original.id ? { ...job, status: "Closed" } : job
-      ));
-    }
-    if (action === "delete") {
-      if (window.confirm("Are you sure you want to delete this job?")) {
-        setJobs(prev => prev.filter(job => job.id !== row.original.id));
+      try {
+        const token = localStorage.getItem("token");
+        await axios.put(
+          `${import.meta.env.VITE_APP_BASE_URL}/jobs/${jobId}`,
+          { ...row.original, status: "closed" },
+          { headers: { Authorization: `${token}` } }
+        );
+        toast.success("Job closed successfully");
+        fetchJobs(); // Refresh the list
+      } catch (error) {
+        console.error("Error closing job:", error);
+        toast.error(error.response?.data?.message || "Failed to close job");
       }
     }
+   if (action === "delete") {
+  setSelectedJobId(jobId);
+  setDeleteModalOpen(true);
+}
   };
 
-  const actions = [
-    { name: "view", icon: "heroicons-outline:eye" },
-    { name: "edit", icon: "heroicons:pencil-square" },
-    { name: "close", icon: "heroicons-outline:lock-closed" },
-    { name: "delete", icon: "heroicons-outline:trash" },
-  ];
+  const handleDeleteJob = async (jobId) => {
+  try {
+    const token = localStorage.getItem("token");
+    await axios.delete(
+      `${import.meta.env.VITE_APP_BASE_URL}/jobs/${jobId}`,
+      { headers: { Authorization: `${token}` } }
+    );
+    toast.success("Job deleted successfully");
+    fetchJobs(); // Refresh the list
+  } catch (error) {
+    console.error("Error deleting job:", error);
+    toast.error(error.response?.data?.message || "Failed to delete job");
+  }
+};
 
   const COLUMNS = useMemo(
     () => [
@@ -182,7 +169,7 @@ const Jobs = () => {
         Header: "Experience",
         accessor: "experience",
         Cell: ({ value }) => (
-          <span className="text-sm text-slate-600">{value || "Not specified"}</span>
+          <span className="text-sm text-slate-600">{value ? `${value} years` : "Not specified"}</span>
         ),
       },
       {
@@ -191,20 +178,26 @@ const Jobs = () => {
         Cell: ({ value }) => (
           <div className="flex items-center">
             <Icon
-              icon={value === "Voice" || value === "voice" ? "heroicons-outline:microphone" : "heroicons-outline:chat-bubble-left-right"}
-              className={`w-4 h-4 mr-2 ${value === "Voice" || value === "voice" ? "text-blue-600" : "text-green-600"}`}
+              icon={value?.toLowerCase() === "voice" ? "heroicons-outline:microphone" : 
+                     value?.toLowerCase() === "video" ? "heroicons-outline:video-camera" : 
+                     "heroicons-outline:chat-bubble-left-right"}
+              className={`w-4 h-4 mr-2 ${
+                value?.toLowerCase() === "voice" ? "text-blue-600" : 
+                value?.toLowerCase() === "video" ? "text-purple-600" : 
+                "text-green-600"
+              }`}
             />
-            <span>{value || "Not specified"}</span>
+            <span className="capitalize">{value || "Not specified"}</span>
           </div>
         ),
       },
       {
-        Header: "AI Weightage Summary",
+        Header: "AI Weightage",
         accessor: "aiWeightage",
         Cell: ({ value }) => {
           if (!value) return <span className="text-sm text-gray-500">Not set</span>;
           return (
-            <div className="space-y-1">
+            <div className="space-y-1 min-w-[120px]">
               <div className="flex items-center justify-between text-xs">
                 <span>Skills</span>
                 <span className="font-medium">{value.skills || 0}%</span>
@@ -245,21 +238,71 @@ const Jobs = () => {
         Header: "Status",
         accessor: "status",
         Cell: ({ value }) => (
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${value === "Active"
-            ? "bg-green-100 text-green-800"
-            : value === "Closed"
-            ? "bg-red-100 text-red-800"
-            : "bg-gray-100 text-gray-800"
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+            value?.toLowerCase() === "active"
+              ? "bg-green-100 text-green-800"
+              : value?.toLowerCase() === "closed"
+              ? "bg-red-100 text-red-800"
+              : "bg-gray-100 text-gray-800"
             }`}>
-            <span className={`w-2 h-2 rounded-full mr-2 ${value === "Active" ? "bg-green-500" : value === "Closed" ? "bg-red-500" : "bg-gray-500"
-              }`}></span>
+            <span className={`w-2 h-2 rounded-full mr-2 ${
+              value?.toLowerCase() === "active" ? "bg-green-500" : 
+              value?.toLowerCase() === "closed" ? "bg-red-500" : 
+              "bg-gray-500"
+            }`}></span>
             {value || "Unknown"}
           </span>
         ),
+      },//applicationLink
+      {
+      Header: "Application Link",
+      accessor: "applicationLink",
+      Cell: ({ value }) => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const [copied, setCopied] = useState(false);
+        
+        const handleCopy = async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            toast.success("Application link copied to clipboard!");
+            
+            // Reset copied state after 2 seconds
+            setTimeout(() => setCopied(false), 2000);
+          } catch (err) {
+            console.error("Failed to copy:", err);
+            toast.error("Failed to copy link");
+          }
+        };
+        
+        if (!value) {
+          return <span className="text-sm text-gray-400">No link</span>;
+        }
+        
+        return (
+          <div className="flex items-center space-x-2 max-w-[250px]">
+            <span className="text-xs text-slate-500 truncate" title={value}>
+              {value}
+            </span>
+            <Tippy content={copied ? "Copied!" : "Copy link"} theme="light">
+              <button
+                onClick={handleCopy}
+                className="p-1 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0"
+              >
+                {copied ? (
+                  <Icon icon="heroicons:check" className="w-4 h-4 text-green-600" />
+                ) : (
+                  <Icon icon="heroicons:clipboard" className="w-4 h-4 text-blue-600" />
+                )}
+              </button>
+            </Tippy>
+          </div>
+        );
       },
+    },
       {
         Header: "Actions",
-        accessor: "id",
+        accessor: "_id",
         Cell: ({ row }) => (
           <div className="flex space-x-3">
             <Tippy content="View">
@@ -282,8 +325,9 @@ const Jobs = () => {
               <button 
                 className="action-btn"
                 onClick={() => handleAction("close", row)}
+                disabled={row.original.status?.toLowerCase() === "closed"}
               >
-                <Icon icon="heroicons-outline:lock-closed" className="text-orange-600" />
+                <Icon icon="heroicons-outline:lock-closed" className={`${row.original.status?.toLowerCase() === "closed" ? "text-gray-400" : "text-orange-600"}`} />
               </button>
             </Tippy>
             <Tippy content="Delete">
@@ -323,7 +367,7 @@ const Jobs = () => {
     {
       columns: COLUMNS,
       data: data,
-      initialState: { pageIndex: 0, pageSize: 5 }
+      initialState: { pageIndex: 0, pageSize: limit }
     },
     useGlobalFilter,
     useSortBy,
@@ -347,8 +391,15 @@ const Jobs = () => {
     pageOptions,
     nextPage,
     previousPage,
+    gotoPage,
     state: { pageIndex },
   } = tableInstance;
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    setPage(newPage + 1);
+    gotoPage(newPage);
+  };
 
   return (
     <div>
@@ -409,111 +460,224 @@ const Jobs = () => {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto -mx-6">
-          <div className="inline-block min-w-full align-middle">
-            <div className="overflow-hidden">
-              {data.length === 0 ? (
-                <div className="text-center py-12">
-                  <Icon icon="heroicons-outline:briefcase" className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
-                  <p className="text-gray-600">Try adjusting your search or create a new job posting.</p>
-                </div>
-              ) : (
-                <table
-                  className="min-w-full divide-y divide-slate-100 table-fixed dark:divide-slate-700"
-                  {...getTableProps()}
+     {/* Table */}
+<div className="overflow-x-auto -mx-6">
+  <div className="inline-block min-w-full align-middle">
+    <div className="overflow-hidden">
+      <table
+        className="min-w-full divide-y divide-slate-100 table-fixed dark:divide-slate-700"
+        {...getTableProps()}
+      >
+        <thead className="border-t border-slate-100 dark:border-slate-800 bg-gradient-to-r from-[#4669FA] to-[#ae5ff4]">
+          {headerGroups.map((headerGroup) => (
+            <tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map((column) => (
+                <th
+                  {...column.getHeaderProps(column.getSortByToggleProps())}
+                  className="table-th whitespace-nowrap"
                 >
-                  <thead className="bg-slate-50 dark:bg-slate-700">
-                    {headerGroups.map((headerGroup) => (
-                      <tr {...headerGroup.getHeaderGroupProps()}>
-                        {headerGroup.headers.map((column) => (
-                          <th
-                            {...column.getHeaderProps(column.getSortByToggleProps())}
-                            className="table-th text-left py-3"
-                          >
-                            <div className="flex items-center">
-                              {column.render("Header")}
-                              <span className="ml-2">
-                                {column.isSorted
-                                  ? column.isSortedDesc
-                                    ? <Icon icon="heroicons-outline:chevron-down" className="w-4 h-4" />
-                                    : <Icon icon="heroicons-outline:chevron-up" className="w-4 h-4" />
-                                  : <Icon icon="heroicons-outline:chevron-up-down" className="w-4 h-4 text-slate-400" />
-                                }
-                              </span>
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    ))}
-                  </thead>
+                  {column.render("Header")}
+                  <span>
+                    {column.isSorted
+                      ? column.isSortedDesc
+                        ? " 🔽"
+                        : " 🔼"
+                      : ""}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody {...getTableBodyProps()} className="text-left">
+          {loading ? (
+            <tr>
+              <td colSpan={COLUMNS.length} className="py-10">
+                <div className="flex justify-center items-center">
+                  <img
+                    src={Loader}
+                    alt="Loading..."
+                    className="w-60 h-16"
+                  />
+                </div>
+              </td>
+            </tr>
+          ) : tablePage.length > 0 ? (
+            tablePage.map((row) => {
+              prepareRow(row);
+              return (
+                <tr {...row.getRowProps()}>
+                  {row.cells.map((cell) => (
+                    <td {...cell.getCellProps()} className="table-td border-b">
+                      {cell.render("Cell")}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan={COLUMNS.length} className="py-6 text-center text-gray-500">
+                No jobs found
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-                  <tbody
-                    className="bg-white divide-y divide-slate-100 dark:bg-slate-800 dark:divide-slate-700"
-                    {...getTableBodyProps()}
-                  >
-                    {tablePage.map((row) => {
-                      prepareRow(row);
-                      return (
-                        <tr {...row.getRowProps()} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                          {row.cells.map((cell) => (
-                            <td {...cell.getCellProps()} className="table-td py-4">
-                              {cell.render("Cell")}
-                            </td>
-                          ))}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
+{/* Pagination */}
+<div className="md:flex md:space-y-0 space-y-5 justify-between mt-6 items-center">
+  {/* Go to page */}
+  <div className="flex items-center gap-2 text-sm">
+    <span className="text-slate-700 dark:text-slate-300">
+      Go to page:
+    </span>
+    <input
+      type="number"
+      min="1"
+      max={pages}
+      value={page}
+      onChange={(e) => {
+        const newPage = Number(e.target.value);
+        if (newPage >= 1 && newPage <= pages) {
+          setPage(newPage);
+          gotoPage(newPage - 1);
+        }
+      }}
+      className="w-16 border rounded-md px-2 py-1 text-center dark:bg-slate-800 dark:text-white"
+    />
+    <span className="text-slate-700 dark:text-slate-300">
+      Page <strong>{page}</strong> of {pages}
+    </span>
+    <span className="text-slate-700 dark:text-slate-300">
+      | Total {total} jobs
+    </span>
+  </div>
 
-        {/* Pagination */}
-        {data.length > 0 && (
-          <div className="flex flex-col md:flex-row justify-between items-center mt-6 pt-6 border-t border-slate-100 dark:border-slate-700">
-            <div className="text-sm text-slate-600 dark:text-slate-300 mb-4 md:mb-0">
-              Page {pageIndex + 1} of {pageOptions.length} | Total {data.length} jobs
-            </div>
+  {/* Page numbers and navigation */}
+  <ul className="flex items-center space-x-3 rtl:space-x-reverse">
+    {/* First Page */}
+    <li className="text-xl text-slate-900 dark:text-white rtl:rotate-180">
+      <button 
+        onClick={() => {
+          setPage(1);
+          gotoPage(0);
+        }} 
+        disabled={page === 1}
+      >
+        <Icon icon="heroicons:chevron-double-left-solid" />
+      </button>
+    </li>
 
-            <div className="flex items-center space-x-3">
-              <Button
-                onClick={previousPage}
-                disabled={!canPreviousPage}
-                className="px-4 py-2 border border-slate-200 rounded-lg disabled:opacity-50"
-              >
-                Previous
-              </Button>
-              <div className="flex items-center space-x-2">
-                {pageOptions.map((page, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => tableInstance.gotoPage(idx)}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${pageIndex === idx
-                        ? "bg-blue-600 text-white"
-                        : "text-slate-600 hover:bg-slate-100"
-                      }`}
-                  >
-                    {idx + 1}
-                  </button>
-                ))}
-              </div>
-              <Button
-                onClick={nextPage}
-                disabled={!canNextPage}
-                className="px-4 py-2 border border-slate-200 rounded-lg disabled:opacity-50"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
+    {/* Previous */}
+    <li>
+      <button 
+        onClick={() => {
+          setPage((p) => Math.max(1, p - 1));
+          previousPage();
+        }} 
+        disabled={page === 1}
+      >
+        Prev
+      </button>
+    </li>
+
+    {/* Page Numbers */}
+    {Array.from({ length: pages }, (_, i) => i + 1).map((num) => (
+      <li key={num}>
+        <button
+          className={`text-sm rounded px-3 py-1 ${
+            num === page
+              ? "bg-slate-900 text-white dark:bg-slate-600 dark:text-slate-200 font-medium"
+              : "bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-slate-400 font-normal"
+          }`}
+          onClick={() => {
+            setPage(num);
+            gotoPage(num - 1);
+          }}
+        >
+          {num}
+        </button>
+      </li>
+    ))}
+
+    {/* Next */}
+    <li>
+      <button 
+        onClick={() => {
+          setPage((p) => Math.min(pages, p + 1));
+          nextPage();
+        }} 
+        disabled={page === pages}
+      >
+        Next
+      </button>
+    </li>
+
+    {/* Last Page */}
+    <li className="text-xl text-slate-900 dark:text-white rtl:rotate-180">
+      <button 
+        onClick={() => {
+          setPage(pages);
+          gotoPage(pages - 1);
+        }} 
+        disabled={page === pages}
+      >
+        <Icon icon="heroicons:chevron-double-right-solid" />
+      </button>
+    </li>
+  </ul>
+
+  {/* Page size selector */}
+  <div className="flex items-center space-x-3 rtl:space-x-reverse">
+    <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Show</span>
+    <select
+      value={limit}
+      onChange={(e) => setLimit(Number(e.target.value))}
+      className="form-select py-2"
+    >
+      {[5, 10, 20, 30, 40].map((size) => (
+        <option key={size} value={size}>
+          {size}
+        </option>
+      ))}
+    </select>
+  </div>
+</div>
+
+{/* Delete Confirmation Modal */}
+<Modal
+  activeModal={deleteModalOpen}
+  onClose={() => setDeleteModalOpen(false)}
+  title="Confirm Delete"
+  themeClass="bg-gradient-to-r from-[#3AB89D] to-[#3A90B8]"
+  centered
+  footerContent={
+    <div className="flex justify-between w-full">
+      <Button text="Cancel" className="btn-light" onClick={() => setDeleteModalOpen(false)} />
+      <Button
+        text="Delete"
+        className="btn-danger"
+        onClick={async () => {
+          await handleDeleteJob(selectedJobId);
+          setDeleteModalOpen(false);
+        }}
+      />
+    </div>
+  }
+>
+  <p className="text-gray-700 text-center">
+    Are you sure you want to delete this job? This action cannot be undone.
+  </p>
+</Modal>
       </Card>
     </div>
   );
 };
 
 export default Jobs;
+
+

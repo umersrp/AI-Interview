@@ -137,6 +137,10 @@ import ReportAnalytics from "./AiInterviewPages/reportAndAnalytics/reportAndAnal
 import JobForm from "./AiInterviewPages/Jobs/jobForm";
 import InterviewFlow from "./AiInterviewPages/interviews/interviewFlow";
 import CandidateForm from "./AiInterviewPages/candidates/candidateForm";
+import TenantListing from "./AiInterviewPages/tenant/tenant-listing";
+import AddTenantPage from "./AiInterviewPages/tenant/[id]/add-tenant";
+import CompanyListing from "./AiInterviewPages/company/companyListing";
+import AddCompany from "./AiInterviewPages/company/addCompany";
 
 
 function App() {
@@ -156,6 +160,7 @@ function App() {
           <Route path="/lock-screen" element={<LockScreen />} />
           <Route path="/lock-screen2" element={<LockScreen2 />} />
           <Route path="/lock-screen3" element={<LockScreen3 />} />
+           <Route path="/add-candidates" element={<CandidateForm/>} />
         </Route>
         <Route path="/*" element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
@@ -244,13 +249,25 @@ function App() {
           <Route path="sellers" element={<Sellers />} />
           <Route path="invoice-ecommerce" element={<InvoiceEPage />} />
 
-          <Route path="jobs" element={<Jobs/>} />
+          <Route path="job-listing" element={<Jobs/>} />
+          <Route path="add-job" element={<JobForm/>} />
+          <Route path="add-job/:id" element={<JobForm/>} />
+
           <Route path="candidates" element={<Candidates/>} />
-          <Route path="add-candidates" element={<CandidateForm/>} />
+          {/* <Route path="add-candidates" element={<CandidateForm/>} /> */}
+          {/* <Route path="add-candidates/:id" element={<CandidateForm/>}/> */}
           <Route path="interviews" element={<Interviews/>} />
           <Route path="reportAnalytics" element={<ReportAnalytics/>} />
-          <Route path="add-job" element={<JobForm/>} />
          <Route path="interview-flow" element={<InterviewFlow/>} />
+  
+         <Route path="tenant-listing" element={<TenantListing/>} />
+         <Route path="add-tenant/add/:id" element={<AddTenantPage/>} />
+         <Route path="add-tenant/add" element={<AddTenantPage/>} />
+
+         <Route path="company-listing" element={<CompanyListing/>} />
+         <Route path="add-company/:id" element={<AddCompany/>} />
+         <Route path="add-company" element={<AddCompany/>} />
+
 
           <Route path="*" element={<Navigate to="/404" />} />
           
