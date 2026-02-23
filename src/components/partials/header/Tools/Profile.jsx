@@ -3,11 +3,14 @@ import Dropdown from "@/components/ui/Dropdown";
 import Icon from "@/components/ui/Icon";
 import { Menu } from "@headlessui/react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logOut } from "@/store/api/auth/authSlice";
 
 import UserAvatar from "@/assets/images/all-img/user.png";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [userName, setUserName] = useState("User Name");
 
   useEffect(() => {
@@ -53,8 +56,8 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    // Update redux state and clear localStorage via the slice
+    dispatch(logOut());
     navigate("/");
   };
 
