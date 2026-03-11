@@ -258,7 +258,7 @@ function App() {
           {/* <Route path="add-candidates/:id" element={<CandidateForm/>}/> */}
           <Route path="interviews" element={<Interviews/>} />
           <Route path="reportAnalytics" element={<ReportAnalytics/>} />
-         <Route path="interview-flow" element={<InterviewFlow/>} />
+         {/* <Route path="interview-flow" element={<InterviewFlow/>} /> */}
   
          <Route path="tenant-listing" element={<TenantListing/>} />
          <Route path="add-tenant/add/:id" element={<AddTenantPage/>} />
@@ -272,6 +272,7 @@ function App() {
           <Route path="*" element={<Navigate to="/404" />} />
           
         </Route>
+               <Route path="/interview-flow" element={<InterviewFlow/>} />
         <Route
           path="/404"
           element={
